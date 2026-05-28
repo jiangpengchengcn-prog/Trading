@@ -1,5 +1,5 @@
 //@version=5
-indicator("SignalBar+InsideBar", overlay=true)
+indicator("SignalBar&InsideBar", overlay=true)
 
 // Calculate the midpoint of the current bar
 bar_middle = (high + low) / 2
