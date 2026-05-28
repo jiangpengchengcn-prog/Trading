@@ -1,0 +1,94 @@
+//@version=5
+indicator("GapTracker", overlay = true, max_boxes_count = 500)
+
+//------------------------------------------------------------------------------
+// 1. Settings
+//------------------------------------------------------------------------------
+grp_fvg   = 'Gap Settings (FVG)'
+show_fvg  = input(true, 'Show Gaps', group = grp_fvg)
+bull_css  = input.color(color.new(#00c853, 75), 'Bullish Color', group = grp_fvg)
+bear_css  = input.color(color.new(#ff3d00, 75), 'Bearish Color', group = grp_fvg)
+
+grp_fill  = 'Filled Behavior'
+filled_act = input.string('Keep & Fade', 'Action on Filled', options = ['Hide Completely', 'Keep & Fade'], group = grp_fill)
+bull_fade = input.color(color.new(#00c853, 94), 'Bullish Filled Color', group = grp_fill)
+bear_fade = input.color(color.new(#ff3d00, 94), 'Bearish Filled Color', group = grp_fill)
+
+grp_ext   = 'Extension Settings'
+ext_mode  = input.string('Fixed Length', 'Extension Mode', options = ['Fixed Length', 'Until Filled'], group = grp_ext)
+ext_bars  = input.int(5, 'Fixed Bars Count', minval = 0, tooltip = '0 means no extension (original gap width only)', group = grp_ext)
+
+grp_fltr  = 'Filter Settings'
+use_width = input(false, 'Enable Min Width Filter', group = grp_fltr)
+gap_width = input.float(0, 'Min Gap Size', group = grp_fltr)
+gap_meth  = input.string('Points', 'Filter Unit', options = ['Points', '%', 'ATR'], group = grp_fltr)
+
+//------------------------------------------------------------------------------
+// 2. Calculations & Types
+//------------------------------------------------------------------------------
+atr = ta.atr(200)
+n = bar_index
+
+type GapBox
+    box   id          
+    float target_lvl  
+    bool  is_bull     
+
+var GapBox[] active_gaps = array.new<GapBox>(0)
+
+check_width(top, btm) =>
+    var is_valid = true
+    if use_width
+        dist = top - btm
+        is_valid := switch gap_meth
+            'Points' => dist > gap_width
+            '%'      => (dist / btm * 100) > gap_width
+            'ATR'    => dist > (atr * gap_width)
+    is_valid
+
+//------------------------------------------------------------------------------
+// 3. Gap Detection
+//------------------------------------------------------------------------------
+is_bull_fvg = show_fvg and (low > high[2]) and check_width(low, high[2])
+is_bear_fvg = show_fvg and (high < low[2]) and check_width(low[2], high)
+
+//------------------------------------------------------------------------------
+// 4. Tracking & Mitigation Logic
+//------------------------------------------------------------------------------
+if array.size(active_gaps) > 0
+    for i = array.size(active_gaps) - 1 to 0
+        GapBox g = array.get(active_gaps, i)
+        
+        if ext_mode == 'Until Filled'
+            box.set_right(g.id, n)
+        
+        bool is_filled = false
+        if g.is_bull
+            if low <= g.target_lvl
+                is_filled := true
+        else
+            if high >= g.target_lvl
+                is_filled := true
+                
+        if is_filled
+            if filled_act == 'Hide Completely'
+                box.delete(g.id)
+            else
+                box.set_bgcolor(g.id, g.is_bull ? bull_fade : bear_fade)
+            
+            array.remove(active_gaps, i)
+
+//------------------------------------------------------------------------------
+// 5. Render New Gaps
+//------------------------------------------------------------------------------
+int right_boundary = ext_mode == 'Until Filled' ? n : (n + ext_bars)
+
+if is_bull_fvg
+    box_id = box.new(left = n-2, top = low, right = right_boundary, bottom = high[2], 
+                     border_color = na, bgcolor = bull_css)
+    array.push(active_gaps, GapBox.new(box_id, high[2], true))
+
+if is_bear_fvg
+    box_id = box.new(left = n-2, top = low[2], right = right_boundary, bottom = high, 
+                     border_color = na, bgcolor = bear_css)
+    array.push(active_gaps, GapBox.new(box_id, low[2], false))
