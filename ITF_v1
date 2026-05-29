@@ -25,7 +25,7 @@ specialColor        = input.color(color.blue, title="Color for Multiples of 12",
 specialCount1       = input.int(18, title="Special Number (Red Line)", minval=1, maxval=1000, group=grp_counter_col)
 specialColor_red    = input.color(color.red, title="Color for Bar 18", group=grp_counter_col)
 
-// --- Group: Gap Settings (FVG) ---
+// --- Group: Gap Settings ---
 grp_fvg   = 'Gap Settings (FVG)'
 show_fvg  = input(true, 'Show Gaps', group = grp_fvg)
 bull_css  = input.color(color.new(#00c853, 75), 'Bullish Color', group = grp_fvg)
@@ -90,7 +90,7 @@ plot(ema_high, color=color.blue, title="Higher TF EMA", linewidth=1, style=plot.
 
 
 // -----------------------------------------------------------------------------
-// MODULE B: Al Brooks Bar Counter
+// MODULE B: Bar Counter
 // -----------------------------------------------------------------------------
 is_new_day() =>
     d = dayofweek
@@ -136,7 +136,7 @@ if should_display_label
 
 
 // -----------------------------------------------------------------------------
-// MODULE C: Gap Tracker (FVG)
+// MODULE C: Gap Tracker
 // -----------------------------------------------------------------------------
 check_width(top, btm) =>
     var is_valid = true
