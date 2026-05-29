@@ -16,7 +16,7 @@ plot(ema_high, color=color.blue, title="Higher TF EMA", linewidth=1, style=plot.
 
 
 // ==========================================
-// --- Dimension 3: Al Brooks Bar Counter ---
+// --- Dimension 3: Bar Counter ---
 // ==========================================
 var GRP_DISPLAY = "Bar Counter - Display Settings"
 var GRP_COLOR   = "Bar Counter - Color Settings"
